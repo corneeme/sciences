@@ -71,7 +71,7 @@ const level = {
             // for (let i = 0; i < 2; ++i) powerUps.directSpawn(m.pos.x + 450, m.pos.y + 50 * Math.random(), "boost");
             // for (let i = 0; i < 100; ++i) powerUps.directSpawn(m.pos.x + 50 * Math.random(), m.pos.y + 50 * Math.random(), "ammo");
             // for (let i = 0; i < 2; i++) powerUps.spawn(player.position.x + Math.random() * 50, player.position.y - Math.random() * 50, "field", false);
-            //lore testing
+            lore testing
             // localSettings.isTrainingNotAttempted = true
             // simulation.isCheating = false //true;
             // for (let i = 0; i < 5; i++) tech.giveTech("undefined")
@@ -86,8 +86,8 @@ const level = {
             // tech.isNoDraftPause = false //disable pause
             // mobs.mobDeaths = 200 //to prevent pacifist mode
             // for (let i = 0; i < 13; i++) level.nextLevel(); //jump to final boss
-            //lore.unlockTesting();
-            //tech.giveTech("tinker"); //show junk tech in experiment mode
+            lore.unlockTesting();
+            tech.giveTech("tinker"); //show junk tech in experiment mode
             // m.storeTech()
             // powerUps.spawn(m.pos.x, m.pos.y, "entanglement", false);
             // for (let i = 0; i < 4; i++) localSettings.difficultyCompleted[i] = true
