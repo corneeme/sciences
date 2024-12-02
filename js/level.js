@@ -86,8 +86,8 @@ const level = {
             // tech.isNoDraftPause = false //disable pause
             // mobs.mobDeaths = 200 //to prevent pacifist mode
             // for (let i = 0; i < 13; i++) level.nextLevel(); //jump to final boss
-            lore.unlockTesting();
-            tech.giveTech("tinker"); //show junk tech in experiment mode
+            //lore.unlockTesting();
+            //tech.giveTech("tinker"); //show junk tech in experiment mode
             // m.storeTech()
             // powerUps.spawn(m.pos.x, m.pos.y, "entanglement", false);
             // for (let i = 0; i < 4; i++) localSettings.difficultyCompleted[i] = true
@@ -102,6 +102,8 @@ const level = {
                 if (localSettings.isAllowed) localStorage.setItem("localSettings", JSON.stringify(localSettings)); //update local storage
             }
         }
+        lore.unlockTesting();
+        tech.giveTech("tinker");
         setupCanvas()
         simulation.setupCamera(player.position);
         simulation.setZoom();
