@@ -42,6 +42,7 @@ const spawn = {
         spawn.pickList.splice(0, 1);
         const push = spawn.mobTypeSpawnOrder[spawn.mobTypeSpawnIndex++ % spawn.mobTypeSpawnOrder.length]
         spawn.pickList.push(push);
+
         // if (spawn.mobTypeSpawnIndex > spawn.mobTypeSpawnOrder.length) spawn.mobTypeSpawnIndex = 0
         //each level has 2 mobs: one new mob and one from the last level
         // spawn.pickList.splice(0, 1);
@@ -116,8 +117,8 @@ const spawn = {
     secondaryBossChance(x, y) {
         if (simulation.difficultyMode > 2 && level.levelsCleared > 1) {
             spawn.randomLevelBoss(x, y);
-            powerUps.directSpawn(x - 30, y, "ammo");
-            powerUps.directSpawn(x + 30, y, "ammo");
+            powerUps.spawn(x - 30, y, "ammo");
+            powerUps.spawn(x + 30, y, "ammo");
         } else {
             return false
         }
@@ -194,7 +195,7 @@ const spawn = {
                 ctx.strokeStyle = "#000"
                 ctx.lineWidth = 1;
                 ctx.stroke();
-                if (tech.isDarkStar && !m.isCloak) { //&& !m.isBodiesAsleep
+                if (tech.isDarkStar && !m.isCloak) { //&& !m.isTimeDilated
                     ctx.fillStyle = "rgba(10,0,40,0.4)"
                     ctx.fill()
                     //damage mobs
@@ -3088,28 +3089,32 @@ const spawn = {
             if (this.seePlayer.yes && dist2 < 4000000) {
                 const rangeWidth = 2000; //this is sqrt of 4000000 from above if()
                 //targeting laser will slowly move from the mob to the player's position
-                this.laserPos = Vector.add(this.laserPos, Vector.mult(Vector.sub(player.position, this.laserPos), 0.1));
+                this.laserPos = Vector.add(this.laserPos, Vector.mult(Vector.sub(player.position, this.laserPos), 0.03));
                 let targetDist = Vector.magnitude(Vector.sub(this.laserPos, m.pos));
                 const r = 12;
                 ctx.beginPath();
                 ctx.moveTo(this.position.x, this.position.y);
                 if (targetDist < r + 16) {
                     targetDist = r + 10;
-                    //charge at player
-                    const forceMag = this.accelMag * 40 * this.mass;
-                    const angle = Math.atan2(this.seePlayer.position.y - this.position.y, this.seePlayer.position.x - this.position.x);
-                    this.force.x += forceMag * Math.cos(angle);
-                    this.force.y += forceMag * Math.sin(angle);
-                }
-                // else {
-                //high friction if can't lock onto player
-                // Matter.Body.setVelocity(this, {
-                //   x: this.velocity.x * 0.98,
-                //   y: this.velocity.y * 0.98
-                // });
-                // }
-                if (dist2 > 80000) {
-                    const laserWidth = 0.002;
+                    if (m.immuneCycle < m.cycle) {
+                        m.damage(0.0003 * simulation.dmgScale);
+                        if (m.energy > 0.1) m.energy -= 0.003
+                    }
+                    ctx.beginPath();
+                    ctx.moveTo(this.position.x, this.position.y);
+                    ctx.lineTo(m.pos.x, m.pos.y);
+                    ctx.lineTo(m.pos.x + (Math.random() - 0.5) * 3000, m.pos.y + (Math.random() - 0.5) * 3000);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = "rgb(0,0,255)";
+                    ctx.setLineDash([125 * Math.random(), 125 * Math.random()]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.arc(m.pos.x, m.pos.y, 40, 0, 2 * Math.PI);
+                    ctx.fillStyle = "rgba(0,0,255,0.1)";
+                    ctx.fill();
+                } else {
+                    const laserWidth = 0.0005;
                     let laserOffR = Vector.rotateAbout(this.laserPos, (targetDist - r) * laserWidth, this.position);
                     let sub = Vector.normalise(Vector.sub(laserOffR, this.position));
                     laserOffR = Vector.add(laserOffR, Vector.mult(sub, rangeWidth));
@@ -3119,7 +3124,7 @@ const spawn = {
                     sub = Vector.normalise(Vector.sub(laserOffL, this.position));
                     laserOffL = Vector.add(laserOffL, Vector.mult(sub, rangeWidth));
                     ctx.lineTo(laserOffL.x, laserOffL.y);
-                    ctx.fillStyle = `rgba(0,0,255,${Math.max(0, 0.3 * r / targetDist)})`
+                    ctx.fillStyle = `rgba(0,0,255,${Math.max(0, 0.6 * r / targetDist)})`
                     ctx.fill();
                 }
             } else {
@@ -3127,6 +3132,69 @@ const spawn = {
             }
         }
     },
+    // focuser(x, y, radius = 30 + Math.ceil(Math.random() * 10)) {
+    //     radius = Math.ceil(radius * 0.7);
+    //     mobs.spawn(x, y, 4, radius, "rgb(0,0,255)");
+    //     let me = mob[mob.length - 1];
+    //     Matter.Body.setDensity(me, 0.003); //extra dense //normal is 0.001
+    //     me.restitution = 0;
+    //     me.laserPos = me.position; //required for laserTracking
+    //     me.repulsionRange = 1200000; //squared
+    //     me.accelMag = 0.00009 * simulation.accelScale;
+    //     me.frictionStatic = 0;
+    //     me.friction = 0;
+    //     me.onDamage = function () {
+    //         this.laserPos = this.position;
+    //     };
+    //     spawn.shield(me, x, y);
+    //     me.do = function () {
+    //         this.seePlayerByLookingAt();
+    //         this.checkStatus();
+    //         this.attraction();
+    //         const dist2 = this.distanceToPlayer2();
+    //         //laser Tracking
+    //         if (this.seePlayer.yes && dist2 < 4000000) {
+    //             const rangeWidth = 2000; //this is sqrt of 4000000 from above if()
+    //             //targeting laser will slowly move from the mob to the player's position
+    //             this.laserPos = Vector.add(this.laserPos, Vector.mult(Vector.sub(player.position, this.laserPos), 0.1));
+    //             let targetDist = Vector.magnitude(Vector.sub(this.laserPos, m.pos));
+    //             const r = 12;
+    //             ctx.beginPath();
+    //             ctx.moveTo(this.position.x, this.position.y);
+    //             if (targetDist < r + 16) {
+    //                 targetDist = r + 10;
+    //                 //charge at player
+    //                 const forceMag = this.accelMag * 40 * this.mass;
+    //                 const angle = Math.atan2(this.seePlayer.position.y - this.position.y, this.seePlayer.position.x - this.position.x);
+    //                 this.force.x += forceMag * Math.cos(angle);
+    //                 this.force.y += forceMag * Math.sin(angle);
+    //             }
+    //             // else {
+    //             //high friction if can't lock onto player
+    //             // Matter.Body.setVelocity(this, {
+    //             //   x: this.velocity.x * 0.98,
+    //             //   y: this.velocity.y * 0.98
+    //             // });
+    //             // }
+    //             if (dist2 > 80000) {
+    //                 const laserWidth = 0.002;
+    //                 let laserOffR = Vector.rotateAbout(this.laserPos, (targetDist - r) * laserWidth, this.position);
+    //                 let sub = Vector.normalise(Vector.sub(laserOffR, this.position));
+    //                 laserOffR = Vector.add(laserOffR, Vector.mult(sub, rangeWidth));
+    //                 ctx.lineTo(laserOffR.x, laserOffR.y);
+
+    //                 let laserOffL = Vector.rotateAbout(this.laserPos, (targetDist - r) * -laserWidth, this.position);
+    //                 sub = Vector.normalise(Vector.sub(laserOffL, this.position));
+    //                 laserOffL = Vector.add(laserOffL, Vector.mult(sub, rangeWidth));
+    //                 ctx.lineTo(laserOffL.x, laserOffL.y);
+    //                 ctx.fillStyle = `rgba(0,0,255,${Math.max(0, 0.3 * r / targetDist)})`
+    //                 ctx.fill();
+    //             }
+    //         } else {
+    //             this.laserPos = this.position;
+    //         }
+    //     }
+    // },
     flutter(x, y, radius = 20 + 6 * Math.random()) {
         mobs.spawn(x, y, 7, radius, '#16576b');
         let me = mob[mob.length - 1];
@@ -3895,7 +3963,7 @@ const spawn = {
             if (this.health < this.nextHealthThreshold) {
                 this.health = this.nextHealthThreshold - 0.01
                 this.nextHealthThreshold = Math.floor(this.health * 4) / 4 //0.75,0.5,0.25
-                this.invulnerableCount = 300
+                this.invulnerableCount = 240
                 this.isInvulnerable = true
                 this.damageReduction = 0
                 if (this.history.length < 200) for (let i = 0; i < 11; i++) this.history.unshift(this.history[0])

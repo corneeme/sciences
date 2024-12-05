@@ -212,7 +212,7 @@ const powerUps = {
     dupExplode() {
         for (let i = 0, len = powerUp.length; i < len; ++i) {
             if (powerUp[i].isDuplicated) {
-                if (Math.random() < 0.003 && !m.isBodiesAsleep) { //  (1-0.003)^240 = chance to be removed after 4 seconds,   240 = 4 seconds * 60 cycles per second
+                if (Math.random() < 0.003 && !m.isTimeDilated) { //  (1-0.003)^240 = chance to be removed after 4 seconds,   240 = 4 seconds * 60 cycles per second
                     b.explosion(powerUp[i].position, 175 + (11 + 3 * Math.random()) * powerUp[i].size);
                     if (powerUp[i]) {
                         Matter.Composite.remove(engine.world, powerUp[i]);
@@ -285,7 +285,7 @@ const powerUps = {
     endDraft(type, isCanceled = false) { //type should be a gun, tech, or field
         if (isCanceled) {
             if (tech.isCancelDuplication) {
-                const value = 0.05
+                const value = 0.06
                 tech.duplication += value
                 simulation.inGameConsole(`tech.duplicationChance() <span class='color-symbol'>+=</span> ${value}`)
                 simulation.circleFlare(value);
@@ -708,7 +708,7 @@ const powerUps = {
             if (amount !== 0) powerUps.research.count += amount
             if (tech.isRerollBots && !this.isMakingBots) {
                 let cycle = () => {
-                    const cost = 2 + Math.floor(0.25 * b.totalBots())
+                    const cost = 2 + Math.floor(b.totalBots() / 3)
                     if (m.alive && powerUps.research.count >= cost) {
                         requestAnimationFrame(cycle);
                         this.isMakingBots = true
@@ -762,7 +762,7 @@ const powerUps = {
             }
             powerUps.research.currentRerollCount++
             if (tech.isResearchReality) {
-                m.switchWorlds()
+                m.switchWorlds("Ψ(t) collapse")
                 simulation.trails()
                 simulation.inGameConsole(`simulation.amplitude <span class='color-symbol'>=</span> ${Math.random()}`);
             }
@@ -812,7 +812,7 @@ const powerUps = {
                         //     color: simulation.mobDmgColor,
                         //     time: simulation.drawTime
                         // });
-                    } else if (overHeal > 0.13) { //if leftover heals spawn a new spammer heal power up
+                    } else if (overHeal > 0.2) { //if leftover heals spawn a new spammer heal power up
                         requestAnimationFrame(() => {
                             powerUps.directSpawn(this.position.x, this.position.y, "heal", true, Math.min(1, overHeal) * 40 * (simulation.healScale ** 0.25))//    directSpawn(x, y, name, moving = true, mode = null, size = powerUps[name].size()) {
                         });
@@ -883,7 +883,7 @@ const powerUps = {
             const couplingExtraAmmo = (m.fieldMode === 10 || m.fieldMode === 0) ? 1 + 0.04 * m.coupling : 1
             if (b.inventory.length > 0) {
                 powerUps.animatePowerUpGrab('rgba(68, 102, 119,0.25)')
-                if (tech.isAmmoForGun && b.activeGun !== null) { //give extra ammo to one gun only with tech logistics
+                if (tech.isAmmoForGun && (b.activeGun !== null && b.activeGun !== undefined)) { //give extra ammo to one gun only with tech logistics
                     const name = b.guns[b.activeGun]
                     if (name.ammo !== Infinity) {
                         if (tech.ammoCap) {
@@ -1618,7 +1618,7 @@ const powerUps = {
                 powerUps.spawn(x, y - 40, "heal", false)
             }
             if (tech.isResearchReality) powerUps.spawnDelay("research", 6)
-            if (tech.isBanish) powerUps.spawnDelay("research", 2)
+            if (tech.isBanish) powerUps.spawnDelay("research", 3)
             if (tech.isCouplingNoHit) powerUps.spawnDelay("coupling", 9)
             // if (tech.isRerollDamage) powerUps.spawnDelay("research", 1)
         }
@@ -1735,9 +1735,10 @@ const powerUps = {
         }
 
         //count big power ups and small power ups
-        let options = ["heal", "research", "ammo"]
+        let options = ["heal", "research", tech.isBoostReplaceAmmo ? "boost" : "ammo"]
         if (m.coupling) options.push("coupling")
         if (tech.isBoostPowerUps) options.push("boost")
+
         let bigIndexes = []
         let smallIndexes = []
         for (let i = 0; i < powerUp.length; i++) {
